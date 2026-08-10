@@ -1,0 +1,32 @@
+# v0 sandbox internal files
+__v0_runtime_loader.js
+__v0_devtools.tsx
+__v0_jsx-dev-runtime.ts
+.snowflake/
+.v0-trash/
+.vercel/
+
+# Environment variables
+.env*.local
+
+# Common ignores
+node_modules
+.next/
+.DS_Store
+*.log
+tsconfig.tsbuildinfo
+
+# Next.js
+.next
+out
+dist
+
+# Local data uploads (video & thumbnails — file besar)
+public/uploads/*
+!public/uploads/.gitkeep
+
+# Lockfiles (jaga bundle manager konsisten)
+package-lock.json
+
+# Optional: keep pnpm-lock.yaml tracked if using pnpm exclusively
+# pnpm-lock.yaml
