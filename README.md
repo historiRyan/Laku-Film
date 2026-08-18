@@ -19,7 +19,7 @@ Berikut adalah tampilan antarmuka utama dari LakuFilm:
 - **Manajemen Video Lengkap:** Unggah film & series, dukungan multi-kualitas video, thumbnail, rating, dan genre.
 - **Penghapusan Berkas Otomatis:** Ketika sebuah film, series, atau episode dihapus, file video dan thumbnail yang bersesuaian di folder `public/uploads/` juga dihapus secara otomatis tanpa menghilangkan berkas yang masih dipakai entitas lain.
 - **Ringan & Self-contained:** Tidak memerlukan server database eksternal. Semua data disimpan dalam file JSON lokal.
-- **Autentikasi Pengguna:** Sistem login & register sederhana dengan role-based access (admin/user), semua data tersimpan lokal.
+- **Autentikasi Pengguna (JWT + HttpOnly Cookie):** Autentikasi berbasis JSON Web Token yang ditandatangani dengan `jose` (algoritma HS256) dan disimpan di browser melalui cookie dengan properti `HttpOnly`, `SameSite=Lax`, dan `Secure` (produksi). Sesi dipertahankan selama 7 hari tanpa menyimpan data sensitif di `localStorage` atau `sessionStorage`.
 
 ---
 
@@ -33,6 +33,7 @@ Berikut adalah tampilan antarmuka utama dari LakuFilm:
 | **Upload Parsing** | `Formidable` & Multipart form handler |
 | **Ikon** | Lucide React |
 | **Tema** | `next-themes` (Light/Dark Mode) |
+| **JWT** | `jose` (HS256 sign/verify) |
 | **Pengelola Paket** | `pnpm` / `npm` |
 
 ---
@@ -51,17 +52,23 @@ Berikut adalah tampilan antarmuka utama dari LakuFilm:
    # atau jika menggunakan npm:
    npm install
    ```
-4. **Jalankan server pengembangan:**
+4. **Konfigurasi Environment Variable (JWT):**
+   Buat berkas `.env.local` di root proyek dan isi dengan secret key untuk JWT:
+   ```bash
+   echo "JWT_SECRET=nama-secret-key-anda" > .env.local
+   ```
+   > Secret ini dipakai untuk menandatangani dan memverifikasi token JWT. Pada produksi, gunakan nilai yang kuat dan unik.
+5. **Jalankan server pengembangan:**
    ```bash
    pnpm dev
    # atau jika menggunakan npm:
    npm run dev
    ```
-5. **Buka di browser:** Akses [http://localhost:3000](http://localhost:3000)
+6. **Buka di browser:** Akses [http://localhost:3000](http://localhost:3000)
    - **Default Akun Admin:** Username: `admin`, Password: `admin` (Akun dapat dikelola di `lib/users.json`).
-6. **Build untuk Produksi:**
+7. **Build untuk Produksi:**
    ```bash
-   bash pnpm build && pnpm start
+   pnpm build && pnpm start
    ```
 
 ---
@@ -72,6 +79,15 @@ Berikut adalah tampilan antarmuka utama dari LakuFilm:
 laku-film/
 ├── app/                        # App Router (Next.js 13+)
 │   ├── api/                    # Route API (films, series, episodes, files)
+│   │   ├── auth/               # Route API autentikasi (JWT + HttpOnly cookie)
+│   │   │   ├── login/
+│   │   │   │   └── route.ts    # Verifikasi kredensial, sign JWT, set cookie
+│   │   │   ├── register/
+│   │   │   │   └── route.ts    # Buat akun, sign JWT (opsional), set cookie
+│   │   │   ├── logout/
+│   │   │   │   └── route.ts    # Hapus cookie auth-token
+│   │   │   └── me/
+│   │   │       └── route.ts    # Baca & verify JWT, kembalikan data user
 │   │   ├── films/              # Route CRUD + hapus file otomatis
 │   │   │   └── [id]/
 │   │   │       └── route.ts
@@ -86,18 +102,23 @@ laku-film/
 │   ├── film-viral/             # Halaman film viral
 ├── components/                 # Komponen UI Reusable
 │   ├── ui/                     # Komponen dasar shadcn/ui
-│   ├── auth-provider.tsx       # Konteks otentikasi
+│   ├── auth-provider.tsx       # Konteks otentikasi (JWT cookie-based)
+│   ├── auth-guard.tsx          # Wrapper proteksi rute (client-side)
 │   ├── home-browser.tsx        # Grid browser film/series
 │   ├── movie-card.tsx          # Kartu film
 │   └── series-actions.tsx      # Aksi episode & series (edit/hapus)
-├── lib/                        # Data film & series (lokal)
+├── lib/                        # Data film & series (lokal) + utilitas
 │   ├── data-video.json         # Data film & series lokal
+│   ├── jwt.ts                  # Utilitas JWT (sign/verify) dengan jose
+│   ├── users.ts                # Server-side user CRUD (baca/tulis users.json)
+│   ├── auth.ts                 # Server-side getCurrentUser() dari cookie
 │   ├── types.ts                # Definisi tipe TypeScript
 │   └── users.json              # Data pengguna (lokal)
 ├── public/                     # Aset statis (uploads, ikon, placeholder)
 │   ├── github.png              # Gambar preview untuk README
 │   └── uploads/                # Video & thumbnail hasil unggah
 ├── styles/                     # Global CSS (Tailwind directives)
+├── .env.local                  # Environment variable (JWT_SECRET)
 ├── package.json                # Dependensi proyek
 └── tsconfig.json               # Konfigurasi TypeScript
 ```
@@ -112,6 +133,31 @@ Mekanisme ini diterapkan secara konsisten di: `DELETE` & `PATCH` pada endpoint A
 2. **Pengecekan Ketergantungan:** Menghitung sekumpulan nama berkas yang masih sedang dipakai oleh entitas yang tersisa (deterministik, agar tidak ada berkas yang terhapus secara tidak sengaja karena dipakai bersama).
 3. **Penghapusan File Fisik:** Hanya menghapus berkas video (`videoFileName`, tiap entry di `videoFiles`) dan thumbnail (`thumbFileName`) yang memang **tidak lagi terpakai**.
 4. **Memperbarui Database:** Memperbarui file JSON data lokal.
+
+---
+
+## 🔐 Alur Autentikasi JWT (HttpOnly Cookie)
+
+Autentikasi menggunakan **JSON Web Token (JWT)** yang disimpan di cookie browser dengan properti `HttpOnly`, melindungi terhadap serangan XSS dan CSRF.
+
+### Alur Login
+1. Klien mengirimkan kredensial (`username`, `password`) ke `POST /api/auth/login`.
+2. Server memverifikasi kredensial melalui `lib/users.ts` (membaca `lib/users.json`).
+3. Jika valid, server menandatangani JWT menggunakan `jose` (algoritma HS256) dengan payload `{ username, name, role }`.
+4. Server mengirimkan respons dengan header `Set-Cookie: auth-token=<jwt>; HttpOnly; SameSite=Lax; Secure` (Secure hanya di produksi).
+5. Browser menyimpan cookie secara otomatis; klien tidak perlu mengelola token secara manual.
+
+### Pelindungan Sesi
+- Pada setiap render, `AuthProvider` memanggil `GET /api/auth/me`.
+- Server membaca cookie `auth-token`, memverifikasinya dengan `jose`, dan mengembalikan data user.
+- Jika token tidak valid atau kadaluarsa, cookie dihapus dan status `user` diset `null`.
+
+### Logout
+- Klien memanggil `POST /api/auth/logout`.
+- Server mengirimkan cookie `auth-token` dengan `Max-Age=0` untuk menghapus sesi.
+
+### Registrasi
+- `POST /api/auth/register` membuat akun baru dan secara otomatis membuatkan JWT + cookie (kecuali untuk `registerAdmin` yang hanya membuat akun tanpa mengganti sesi).
 
 ---
 
