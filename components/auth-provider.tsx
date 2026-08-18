@@ -8,13 +8,6 @@ export type User = {
   role?: string
 }
 
-type StoredUser = {
-  username: string
-  password: string
-  role: string
-  name: string
-}
-
 type AuthResult = {
   ok: boolean
   error?: string
@@ -30,42 +23,37 @@ type AuthContextValue = {
   logout: () => void
 }
 
-const USERS_KEY = "lakufilm.users"
-const SESSION_KEY = "lakufilm.session"
-
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-async function readUsers(): Promise<StoredUser[]> {
+async function fetchMe(): Promise<User | null> {
   try {
-    const res = await fetch('/api/files', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        operation: 'read',
-        filePath: 'lib/users.json'
-      })
+    const res = await fetch("/api/auth/me", {
+      method: "GET",
+      credentials: "include",
     })
-    const { success, data } = await res.json()
-    return success ? JSON.parse(data).users : []
+    if (!res.ok) return null
+    const { user } = await res.json()
+    return user ?? null
   } catch {
-    return []
+    return null
   }
 }
 
-async function writeUsers(users: StoredUser[]) {
-  try {
-    await fetch('/api/files', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        operation: 'write',
-        filePath: 'lib/users.json',
-        data: { users }
-      })
-    })
-  } catch (error) {
-    console.error("Gagal menyimpan data pengguna:", error)
+async function authRequest(
+  url: string,
+  body: Record<string, unknown>
+): Promise<{ ok: boolean; error?: string; user?: User }> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(body),
+  })
+  const data = await res.json()
+  if (!data.ok) {
+    return { ok: false, error: data.error ?? "Terjadi kesalahan." }
   }
+  return { ok: true, user: data.user }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -73,63 +61,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    try {
-      const session = localStorage.getItem(SESSION_KEY)
-      if (session) setUser(JSON.parse(session) as User)
-    } catch {
-      // ignore
-    }
-    setReady(true)
+    fetchMe().then((u) => {
+      setUser(u)
+      setReady(true)
+    })
+  }, [])
+
+  const login = useCallback(async (username: string, password: string) => {
+    const result = await authRequest("/api/auth/login", { username, password })
+    if (!result.ok) return { ok: false, error: result.error }
+    if (result.user) setUser(result.user)
+    return { ok: true, role: result.user?.role }
   }, [])
 
   const register = useCallback(async (name: string, username: string, password: string) => {
-    const normalizedUsername = username.trim().toLowerCase()
-    if (!name.trim() || !normalizedUsername || !password) {
-      return { ok: false, error: "Semua kolom wajib diisi." }
-    }
-    const users = await readUsers()
-    if (users.some((u: StoredUser) => u.username === normalizedUsername)) {
-      return { ok: false, error: "Username sudah terdaftar. Silakan masuk." }
-    }
-    const newUser: StoredUser = { name: name.trim(), username: normalizedUsername, password, role: "user" }
-    await writeUsers([...users, newUser])
-    const session: User = { name: newUser.name, username: newUser.username }
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session))
-    setUser(session)
+    const result = await authRequest("/api/auth/register", {
+      name,
+      username,
+      password,
+      role: "user",
+      autoLogin: true,
+    })
+    if (!result.ok) return { ok: false, error: result.error }
+    if (result.user) setUser(result.user)
     return { ok: true }
   }, [])
 
   const registerAdmin = useCallback(async (name: string, username: string, password: string) => {
-    const normalizedUsername = username.trim().toLowerCase()
-    if (!name.trim() || !normalizedUsername || !password) {
-      return { ok: false, error: "Semua kolom wajib diisi." }
-    }
-    const users = await readUsers()
-    if (users.some((u: StoredUser) => u.username === normalizedUsername)) {
-      return { ok: false, error: "Username sudah terdaftar. Silakan masuk." }
-    }
-    const newUser: StoredUser = { name: name.trim(), username: normalizedUsername, password, role: "admin" }
-    await writeUsers([...users, newUser])
+    const result = await authRequest("/api/auth/register", {
+      name,
+      username,
+      password,
+      role: "admin",
+      autoLogin: false,
+    })
+    if (!result.ok) return { ok: false, error: result.error }
     return { ok: true, role: "admin" }
   }, [])
 
-  const login = useCallback(async (username: string, password: string) => {
-    const users = await readUsers()
-    const match = users.find((u: StoredUser) => u.username === username && u.password === password)
-    if (!match) {
-      return { ok: false, error: "Username atau kata sandi salah." }
+  const logout = useCallback(async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      })
+    } catch {
+      // ignore
     }
-    const session: User = { name: match.name, username: match.username, role: match.role }
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session))
-    setUser(session)
-    return { 
-      ok: true,
-      role: match.role
-    }
-  }, [])
-
-  const logout = useCallback(() => {
-    localStorage.removeItem(SESSION_KEY)
     setUser(null)
   }, [])
 
