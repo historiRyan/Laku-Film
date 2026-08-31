@@ -16,18 +16,17 @@ Berikut adalah tampilan antarmuka utama dari LakuFilm:
 
 ## ✨ Fitur Utama
 
-- **🎬 Manajemen Video Lengkap:** Unggah film & series, dukungan **multi-kualitas** (360p/720p/1080p), thumbnail, rating, dan genre.
+- **🎬 Manajemen Video Lengkap:** Unggah film & series lewat `/upload` & `/upload-series`, dukungan **multi-kualitas** (360p/720p/1080p), thumbnail, rating, dan genre.
 - **▶️ Player Multi-Kualitas:** Ganti resolusi 360p/720p/1080p langsung di player (`/play/[id]`).
 - **🗑️ Penghapusan Berkas Otomatis:** Saat film/series/episode dihapus, file video & thumbnail di Blob ikut terhapus (tidak menghapus file yang masih dipakai entitas lain).
 - **🔐 Autentikasi JWT + HttpOnly Cookie:** Login dengan `jose` (HS256), cookie `HttpOnly` + `SameSite=Lax` + `Secure` (produksi), sesi 7 hari. Password di-hash dengan `scrypt` (bukan plaintext).
-- **👤 Peran User & Admin:** Admin bisa upload/delete; user biasa bisa nonton, wishlist, sewa (Toko), chat.
-- **💬 Chat:** Fitur percakapan antar user (halaman `/chat`).
-- **🛒 Toko / Rental:** Sistem sewa film (halaman `/toko`, `/my-orders` untuk pesanan, `/courier` untuk kurir).
-- **📋 Watchlist:** Simpan film ke daftar wishlist (halaman profil).
-- **🔍 Pencarian:** Cari film/series lokal + eksternal.
-- **🌐 Rekomendasi Eksternal (Watchmode):** Saran film dari API Watchmode (butuh `WATCHMODE_API_KEY`, opsional).
+- **👤 Peran User & Admin:** Admin bisa upload/delete via `/film-saya`; user biasa bisa daftar & login untuk menonton.
+- **🔍 Pencarian:** Cari film/series lokal + eksternal (`/api/search`).
+- **🌐 Rekomendasi Eksternal (Watchmode):** Saran film populer dari API Watchmode di beranda (butuh `WATCHMODE_API_KEY`, opsional).
 - **📱 Desain Responsif + Dark/Light Mode:** Tailwind CSS, `shadcn/ui`, `next-themes`.
 - **⚡ Dual-Mode Storage:** Otomatis pakai Upstash Redis + Vercel Blob di Vercel; fallback ke filesystem lokal saat `npm run dev`.
+
+> 📌 Catatan: fitur Toko/Rental, Chat, Watchlist, dan halaman Profil **belum tersedia** di versi ini — hanya route di atas yang aktif.
 
 ---
 
