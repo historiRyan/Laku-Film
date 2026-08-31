@@ -4,6 +4,7 @@ import { ArrowLeft, Star } from "lucide-react"
 
 import { SiteHeader } from "@/components/site-header"
 import { VideoPlayer } from "@/components/video-player"
+import { CommentsSection } from "@/components/comments-section"
 import { getVideoQualities } from "@/lib/video-quality"
 import { getMovieById } from "@/lib/watchmode"
 
@@ -77,6 +78,8 @@ export default async function MovieDetailPage({
         </div>
 
         <VideoPlayer poster={movie.poster} title={movie.title} qualities={qualities} filmId={id} />
+
+        <CommentsSection filmId={id} />
       </main>
 
       <footer className="border-t border-border">
