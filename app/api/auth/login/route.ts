@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server'
-import { signJwt, getCookieOptions } from '@/lib/jwt'
-import { readUsers, writeUsers } from '@/lib/users'
+import { NextResponse } from "next/server"
+import { signJwt, getCookieOptions } from "@/lib/jwt"
+import { readUsers, writeUsers } from "@/lib/users"
+import { verifyPassword } from "@/lib/password"
 
 export async function POST(request: Request) {
   try {
@@ -8,20 +9,20 @@ export async function POST(request: Request) {
 
     if (!username || !password) {
       return NextResponse.json(
-        { ok: false, error: 'Username dan kata sandi wajib diisi.' },
-        { status: 400 }
+        { ok: false, error: "Username dan kata sandi wajib diisi." },
+        { status: 400 },
       )
     }
 
     const users = readUsers()
     const match = users.find(
-      (u) => u.username === username.trim().toLowerCase() && u.password === password
+      (u) => u.username === username.trim().toLowerCase(),
     )
 
-    if (!match) {
+    if (!match || !(await verifyPassword(password, match.password))) {
       return NextResponse.json(
-        { ok: false, error: 'Username atau kata sandi salah.' },
-        { status: 401 }
+        { ok: false, error: "Username atau kata sandi salah." },
+        { status: 401 },
       )
     }
 
@@ -34,13 +35,13 @@ export async function POST(request: Request) {
     const user = { name: match.name, username: match.username, role: match.role }
 
     const res = NextResponse.json({ ok: true, user })
-    res.cookies.set('auth-token', token, getCookieOptions())
+    res.cookies.set("auth-token", token, getCookieOptions())
 
     return res
   } catch {
     return NextResponse.json(
-      { ok: false, error: 'Terjadi kesalahan.' },
-      { status: 500 }
+      { ok: false, error: "Terjadi kesalahan." },
+      { status: 500 },
     )
   }
 }

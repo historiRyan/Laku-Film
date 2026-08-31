@@ -2,13 +2,13 @@
   "users": [
     {
       "username": "admin",
-      "password": "admin",
+      "password": "692e1fb4c3ec3df37d9e918c856d6168:11a595af6e22da9ce161ad578d377a5f0f505e298a50bc5e4840206b07f9716803de5bff7226d282efcaeb37f7555631319e61f42096c035567343cf33746557",
       "role": "admin"
     },
     {
       "name": "coba",
       "username": "coba",
-      "password": "123",
+      "password": "766755a9c437ad0ea0f120d3e9e822e4:236b7f809b47cb095818b00a0e8da679fd4c398597b30a9abaa56b083ad69f0cb56424be3dec1419c6df9ff71df0d7aeb542c0954dce9e8b2dcd524b3208d801",
       "role": "user"
     }
   ]

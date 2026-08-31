@@ -99,15 +99,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { ok: true, role: "admin" }
   }, [])
 
-  const logout = useCallback(async () => {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      })
-    } catch {
-      // ignore
-    }
+  const logout = useCallback(() => {
+    fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    }).catch(() => {})
     setUser(null)
   }, [])
 

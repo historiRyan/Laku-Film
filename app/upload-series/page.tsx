@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState, type FormEvent } from "react"
+import { useEffect, useRef, useState, Suspense, type FormEvent } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Film, Save, Plus, X, Trash2, ChevronDown } from "lucide-react"
@@ -64,6 +64,14 @@ function filePreviewUrl(file: File | null | undefined): string | null {
 }
 
 export default function UploadSeriesPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background text-foreground"><SiteHeader /><main className="mx-auto max-w-3xl px-4 py-16"><p className="text-muted-foreground">Memuat...</p></main></div>}>
+      <UploadSeriesPageInner />
+    </Suspense>
+  )
+}
+
+function UploadSeriesPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, ready } = useAuth()

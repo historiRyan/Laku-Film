@@ -186,27 +186,16 @@ export default function UploadPage() {
         if (videoFiles) patchBody.videoFiles = videoFiles
         if (thumbFileName) patchBody.thumbFileName = thumbFileName
 
-        await fetch(`/api/films/${editId}`, {
+        const patchRes = await fetch(`/api/films/${editId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(patchBody),
         })
-      } else {
-        const uploadRes2 = await fetch("/api/files", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            operation: "read",
-            filePath: "lib/data-video.json",
-          }),
-        })
-        let existingVideos: LocalFilm[] = []
-        try {
-          const parsed = await uploadRes2.json()
-          existingVideos = parsed.data ? JSON.parse(parsed.data).videos || [] : []
-        } catch {
-          existingVideos = []
+        if (!patchRes.ok) {
+          const err = await patchRes.json().catch(() => ({}))
+          throw new Error(err.error || "Gagal memperbarui film.")
         }
+      } else {
         if (
           !videoFileName ||
           !thumbFileName ||
@@ -214,31 +203,24 @@ export default function UploadPage() {
         ) {
           throw new Error("Gagal mengunggah berkas.")
         }
-        await fetch("/api/files", {
+
+        const createForm = new FormData()
+        createForm.append("title", title.trim())
+        createForm.append("description", description.trim())
+        createForm.append("rating", String(rating))
+        createForm.append("genres", genres.join(","))
+        createForm.append("videoFileName", videoFileName)
+        createForm.append("thumbFileName", thumbFileName)
+        createForm.append("videoFiles", JSON.stringify(videoFiles))
+
+        const createRes = await fetch("/api/films", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            operation: "write",
-            filePath: "lib/data-video.json",
-            data: {
-              videos: [
-                {
-                  id: videoFileName.split(".")[0],
-                  title: title.trim(),
-                  description: description.trim(),
-                  owner: user.username,
-                  videoFileName,
-                  videoFiles,
-                  thumbFileName,
-                  createdAt: Date.now(),
-                  rating,
-                  genres,
-                },
-                ...existingVideos,
-              ],
-            },
-          }),
+          body: createForm,
         })
+        if (!createRes.ok) {
+          const err = await createRes.json().catch(() => ({}))
+          throw new Error(err.error || "Gagal menyimpan film.")
+        }
       }
 
       resetForm()
