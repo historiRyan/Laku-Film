@@ -22,7 +22,7 @@ export default async function SeriesEpisodesPage({
     notFound()
   }
 
-  const poster = series.thumbFileName ? `/uploads/${series.thumbFileName}` : "/placeholder.svg"
+  const poster = series.thumbFileName ? series.thumbFileName : "/placeholder.svg"
 
   return (
     <AuthGuard>
@@ -142,7 +142,7 @@ export default async function SeriesEpisodesPage({
                           {ep.thumbFileName ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
-                              src={`/uploads/${ep.thumbFileName}`}
+                              src={ep.thumbFileName ?? "/placeholder.svg"}
                               alt={ep.title}
                               className="size-16 shrink-0 rounded object-cover bg-muted"
                               loading="lazy"

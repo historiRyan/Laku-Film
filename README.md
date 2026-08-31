@@ -163,25 +163,35 @@ Autentikasi menggunakan **JSON Web Token (JWT)** yang disimpan di cookie browser
 
 ---
 
-## 🚀 Deploy ke Hosting Node (Railway / Render)
+## 🚀 Deploy ke Vercel (dengan Upstash Redis + Vercel Blob)
 
-LakuFilm menyimpan video & data di **filesystem server** (`public/uploads/`, `lib/data-video.json`, `lib/users.json`), sehingga butuh hosting yang menjalankan **Node.js secara penuh** (bukan static host seperti Cloudflare Pages atau GitHub Pages). Rekomendasi: **Railway** atau **Render**.
+LakuFilm menyimpan **metadata & user di Upstash Redis** dan **video/thumbnail di Vercel Blob** — keduanya persist di lingkungan serverless Vercel (filesystem lokal tidak tersimpan di Vercel).
 
-### Railway (paling mudah)
-1. Fork/connect repo ini ke Railway.
-2. Railway otomatis deteksi `railway.json` (build `nixpacks`, start `npm run start`).
-3. Di *Variables*, set:
-   - `JWT_SECRET` → string acak panjang (wajib diubah).
-   - `WATCHMODE_API_KEY` → opsional (rekomendasi film eksternal).
-4. Deploy. Domain otomatis diberikan.
+### 1. Persiapan
+- **Upstash Redis** (gratis): buat database di https://upstash.com → salin **REST API URL** & **REST API Token**.
+- **Vercel Blob**: di dashboard Vercel project → *Storage* → *Add Store* → *Blob*. Token otomatis terisi (`BLOB_READ_WRITE_TOKEN`).
 
-### Render
-1. *New Web Service* → connect repo.
-2. `render.yaml` sudah disediakan (plan free, Node 20).
-3. Di *Environment*, isi `JWT_SECRET` & `WATCHMODE_API_KEY`.
+### 2. Deploy
+1. *New Project* → import repo `historiRyan/Laku-Film`.
+2. `vercel.json` sudah disediakan (build `pnpm install && pnpm run build`, function timeout 60s untuk upload).
+3. Di *Environment Variables*, isi:
+   - `JWT_SECRET` → string acak panjang.
+   - `UPSTASH_REDIS_REST_URL` & `UPSTASH_REDIS_REST_TOKEN` → dari Upstash.
+   - `WATCHMODE_API_KEY` → opsional.
+   - `BLOB_READ_WRITE_TOKEN` → otomatis dari Blob store.
 4. Deploy.
 
-> ⚠️ Catatan: file & data tersimpan di disk container. Di tier free yang auto-sleep atau saat redeploy, **data bisa reset** (sesuai sifat self-hosted). Untuk persistensi penuh, gunakan layanan berbayar atau pindahkan storage ke object storage (R2/S3).
+### 3. Catatan
+- Mode **lokal** (`npm run dev` tanpa env di atas) tetap pakai **filesystem** (`public/uploads/`, `lib/*.json`) — praktis untuk development.
+- Deteksi mode otomatis: ada `UPSTASH_REDIS_REST_URL` + `BLOB_READ_WRITE_TOKEN` → Vercel mode; selain itu → filesystem mode.
+
+> ⚠️ Upload video besar dibatasi oleh batas body request Vercel (Hobby ~4.5MB, Pro ~25MB per route). Untuk file sangat besar, naikkan plan atau gunakan upload langsung ke Blob.
+
+---
+
+## 🚀 Alternatif: Hosting Node (Railway / Render)
+
+Jika ingin tetap di hosting Node penuh, repo ini kompatibel dengan `railway.json` / `render.yaml` (mode filesystem). Catatan: data tersimpan di disk container — di tier free yang auto-sleep atau saat redeploy, **data bisa reset**.
 
 ---
 

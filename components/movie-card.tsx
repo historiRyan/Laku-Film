@@ -12,7 +12,7 @@ export function MovieCard({ movie }: { movie: Film }) {
         <div className="relative aspect-[2/3] overflow-hidden bg-muted">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={("videoFileName" in movie) ? `/uploads/${movie.thumbFileName}` : movie.poster || "/placeholder.svg"}
+            src={("videoFileName" in movie) ? movie.thumbFileName : movie.poster || "/placeholder.svg"}
             alt={`Poster film ${movie.title}`}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"

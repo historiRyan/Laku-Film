@@ -33,14 +33,14 @@ export async function POST(request: Request) {
 
     writeUsers([...users, newUser])
 
-    const user = { name: newUser.name, username: newUser.username, role: newUser.role }
+    const user = { name: newUser.name ?? newUser.username, username: newUser.username, role: newUser.role }
 
     const res = NextResponse.json({ ok: true, user })
 
     if (autoLogin) {
       const token = await signJwt({
         username: newUser.username,
-        name: newUser.name,
+        name: newUser.name ?? newUser.username,
         role: newUser.role,
       })
       res.cookies.set(COOKIE_NAME, token, getCookieOptions())

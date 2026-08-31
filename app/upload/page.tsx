@@ -340,7 +340,7 @@ export default function UploadPage() {
                   <div className="overflow-hidden rounded-lg border border-border">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={`/uploads/${existingFilm.thumbFileName}`}
+                      src={existingFilm.thumbFileName}
                       className="aspect-video w-full object-cover"
                     />
                     <div className="px-3 py-2">

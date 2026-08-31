@@ -29,7 +29,7 @@ export function SeriesCard({
         <div className="relative aspect-[2/3] overflow-hidden bg-muted">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={series.thumbFileName ? `/uploads/${series.thumbFileName}` : "/placeholder.svg"}
+            src={series.thumbFileName ? series.thumbFileName : "/placeholder.svg"}
             alt={`Thumbnail series ${series.title}`}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
