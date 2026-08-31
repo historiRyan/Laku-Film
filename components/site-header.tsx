@@ -36,6 +36,12 @@ export function SiteHeader() {
               >
                 Series
               </Link>
+              <Link
+                href="/watchlist"
+                className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "hidden sm:inline-flex")}
+              >
+                Watchlist
+              </Link>
               {user.role === "admin" && (
                 <>
                   <Link
