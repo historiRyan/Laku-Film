@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react"
 import { Bookmark, BookmarkCheck } from "lucide-react"
 import { useAuth } from "@/components/auth-provider"
+import type { Film } from "@/lib/types"
 
-export function WatchlistButton({ filmId }: { filmId: string }) {
+export function WatchlistButton({ film }: { film: Film }) {
   const { user, ready } = useAuth()
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(false)
+  const filmId = String(film.id)
 
   useEffect(() => {
     if (!user) return
@@ -37,11 +39,19 @@ export function WatchlistButton({ filmId }: { filmId: string }) {
         })
         setSaved(false)
       } else {
+        const snapshot = {
+          id: filmId,
+          title: film.title,
+          thumb: "videoFileName" in film ? film.thumbFileName : film.poster || "/placeholder.svg",
+          year: "year" in film ? film.year : undefined,
+          genres: film.genres,
+          description: "plot" in film ? film.plot : film.description || "",
+        }
         await fetch("/api/watchlist", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ filmId }),
+          body: JSON.stringify(snapshot),
         })
         setSaved(true)
       }

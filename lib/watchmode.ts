@@ -4,7 +4,7 @@ const API_KEY = process.env.WATCHMODE_API_KEY ?? ""
 const BASE_URL = "https://api.watchmode.com/v1"
 
 // Berapa banyak film yang ditampilkan (sederhana, ambil sedikit data)
-const MOVIE_LIMIT = 8
+const MOVIE_LIMIT = 12
 
 export type Movie = {
   id: number

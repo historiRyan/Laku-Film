@@ -7,12 +7,11 @@ import { Bookmark } from "lucide-react"
 import { useAuth } from "@/components/auth-provider"
 import { AuthGuard } from "@/components/auth-guard"
 import { SiteHeader } from "@/components/site-header"
-import { MovieCard } from "@/components/movie-card"
-import type { Film } from "@/lib/types"
+import type { WatchlistItem } from "@/lib/watchlist"
 
 function WatchlistContent() {
   const { user } = useAuth()
-  const [items, setItems] = useState<Film[]>([])
+  const [items, setItems] = useState<WatchlistItem[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -46,7 +45,39 @@ function WatchlistContent() {
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {items.map((film) => (
-            <MovieCard key={film.id} movie={film} />
+            <Link
+              key={film.id}
+              href={`/film/${film.id}`}
+              className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md"
+            >
+              <div className="relative aspect-[2/3] overflow-hidden bg-muted">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={film.thumb}
+                  alt={`Poster ${film.title}`}
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  loading="lazy"
+                />
+              </div>
+              <div className="flex flex-1 flex-col gap-2 p-4">
+                <h3 className="text-balance font-semibold leading-tight">{film.title}</h3>
+                {film.year ? (
+                  <span className="text-sm text-muted-foreground">{String(film.year)}</span>
+                ) : null}
+                {film.genres?.length ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {film.genres.map((g) => (
+                      <span
+                        key={g}
+                        className="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
+                      >
+                        {g}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </Link>
           ))}
         </div>
       )}
