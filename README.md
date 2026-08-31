@@ -1,6 +1,8 @@
 # 🎬 LakuFilm - Nontren Bareng, Kamu Hosting Sendiri
 
-**LakuFilm** adalah platform streaming video pribadi berbasis web yang dibangun dengan Next.js. Kamu bisa mengunggah film & series, mengelola kualitas video (360p/720p/1080p), serta menghapus berkas asli otomatis saat data dihapus. Proyek ini berjalan lokal tanpa database eksternal.
+**LakuFilm** adalah platform streaming video pribadi berbasis web yang dibangun dengan Next.js (App Router). Kamu bisa mengunggah film & series, mengelola kualitas video (360p/720p/1080p), chat antar user, toko/rental, dan masih banyak lagi. Data metadata & user tersimpan di **Upstash Redis**, sedangkan video & thumbnail di **Vercel Blob** — keduanya persist di Vercel.
+
+> 🌐 **Live demo:** https://laku-film-1tg5.vercel.app
 
 ---
 
@@ -8,18 +10,24 @@
 Berikut adalah tampilan antarmuka utama dari LakuFilm:
 
 ![Screenshot Home](./public/github.png)
-*Menampilkan daftar film & series lokal di samping saran film dari sumber eksternal.*
+*Menampilkan daftar film & series lokal di samping saran film dari sumber eksternal (Watchmode).*
 
 ---
 
 ## ✨ Fitur Utama
 
-- **Desain Responsif Modern:** Didukung Tailwind CSS & komponen `shadcn/ui` yang nyaman di desktop maupun mobile.
-- **Navigasi Cepat & Intuitif:** Menggunakan App Router Next.js dengan navigasi *client-side* yang halus.
-- **Manajemen Video Lengkap:** Unggah film & series, dukungan multi-kualitas video, thumbnail, rating, dan genre.
-- **Penghapusan Berkas Otomatis:** Ketika sebuah film, series, atau episode dihapus, file video dan thumbnail yang bersesuaian di folder `public/uploads/` juga dihapus secara otomatis tanpa menghilangkan berkas yang masih dipakai entitas lain.
-- **Ringan & Self-contained:** Tidak memerlukan server database eksternal. Semua data disimpan dalam file JSON lokal.
-- **Autentikasi Pengguna (JWT + HttpOnly Cookie):** Autentikasi berbasis JSON Web Token yang ditandatangani dengan `jose` (algoritma HS256) dan disimpan di browser melalui cookie dengan properti `HttpOnly`, `SameSite=Lax`, dan `Secure` (produksi). Sesi dipertahankan selama 7 hari tanpa menyimpan data sensitif di `localStorage` atau `sessionStorage`.
+- **🎬 Manajemen Video Lengkap:** Unggah film & series, dukungan **multi-kualitas** (360p/720p/1080p), thumbnail, rating, dan genre.
+- **▶️ Player Multi-Kualitas:** Ganti resolusi 360p/720p/1080p langsung di player (`/play/[id]`).
+- **🗑️ Penghapusan Berkas Otomatis:** Saat film/series/episode dihapus, file video & thumbnail di Blob ikut terhapus (tidak menghapus file yang masih dipakai entitas lain).
+- **🔐 Autentikasi JWT + HttpOnly Cookie:** Login dengan `jose` (HS256), cookie `HttpOnly` + `SameSite=Lax` + `Secure` (produksi), sesi 7 hari. Password di-hash dengan `scrypt` (bukan plaintext).
+- **👤 Peran User & Admin:** Admin bisa upload/delete; user biasa bisa nonton, wishlist, sewa (Toko), chat.
+- **💬 Chat:** Fitur percakapan antar user (halaman `/chat`).
+- **🛒 Toko / Rental:** Sistem sewa film (halaman `/toko`, `/my-orders` untuk pesanan, `/courier` untuk kurir).
+- **📋 Watchlist:** Simpan film ke daftar wishlist (halaman profil).
+- **🔍 Pencarian:** Cari film/series lokal + eksternal.
+- **🌐 Rekomendasi Eksternal (Watchmode):** Saran film dari API Watchmode (butuh `WATCHMODE_API_KEY`, opsional).
+- **📱 Desain Responsif + Dark/Light Mode:** Tailwind CSS, `shadcn/ui`, `next-themes`.
+- **⚡ Dual-Mode Storage:** Otomatis pakai Upstash Redis + Vercel Blob di Vercel; fallback ke filesystem lokal saat `npm run dev`.
 
 ---
 
@@ -27,174 +35,69 @@ Berikut adalah tampilan antarmuka utama dari LakuFilm:
 
 | Komponen | Teknologi |
 | :--- | :--- |
-| **Framework** | Next.js (App Router) |
-| **UI & Styling** | React, `shadcn/ui`, Tailwind CSS, `tailwind-merge`, `clsx`, `cva` |
-| **Data (Lokal)** | File JSON (`lib/data-video.json`, `lib/users.json`) via Node.js `fs` |
-| **Upload Parsing** | `Formidable` & Multipart form handler |
+| **Framework** | Next.js 16 (App Router), React 19 |
+| **UI & Styling** | `shadcn/ui`, Tailwind CSS 4, `tailwind-merge`, `clsx`, `cva` |
+| **Storage (Vercel)** | Upstash Redis (metadata/user) + Vercel Blob (video/thumbnail) |
+| **Storage (Lokal)** | Node.js `fs` (`lib/data-video.json`, `lib/users.json`) |
+| **Upload** | Native `formData` multipart → Blob |
 | **Ikon** | Lucide React |
-| **Tema** | `next-themes` (Light/Dark Mode) |
-| **JWT** | `jose` (HS256 sign/verify) |
-| **Pengelola Paket** | `pnpm` / `npm` |
+| **Tema** | `next-themes` (Light/Dark) |
+| **JWT** | `jose` (HS256) |
+| **Password** | Node `crypto.scrypt` (salt + hash, timing-safe) |
+| **Pengelola Paket** | `pnpm` |
 
 ---
 
 ## 🚀 Instalasi & Menjalankan di Komputer Lokal
 
-1. **Pastikan Node.js sudah terpasang** (v18+ direkomendasikan).
-2. **Clone repository ini** dan masuk ke direktori proyek:
+1. **Clone repo:**
    ```bash
    git clone https://github.com/historiRyan/laku-film.git
    cd laku-film
    ```
-3. **Pasang dependensi:**
+2. **Pasang dependensi:** `pnpm install`
+3. **Env lokal:** buat `.env.local`:
    ```bash
-   pnpm install
-   # atau jika menggunakan npm:
-   npm install
+   JWT_SECRET=isi-string-acak
    ```
-4. **Konfigurasi Environment Variable (JWT):**
-   Buat berkas `.env.local` di root proyek dan isi dengan secret key untuk JWT:
-   ```bash
-   echo "JWT_SECRET=nama-secret-key-anda" > .env.local
-   ```
-   > Secret ini dipakai untuk menandatangani dan memverifikasi token JWT. Pada produksi, gunakan nilai yang kuat dan unik.
-5. **Jalankan server pengembangan:**
-   ```bash
-   pnpm dev
-   # atau jika menggunakan npm:
-   npm run dev
-   ```
-6. **Buka di browser:** Akses [http://localhost:3000](http://localhost:3000)
-   - **Default Akun Admin:** Username: `admin`, Password: `admin` (Akun dapat dikelola di `lib/users.json`).
-7. **Build untuk Produksi:**
-   ```bash
-   pnpm build && pnpm start
-   ```
+4. **Jalankan dev:** `pnpm dev` → buka http://localhost:3000
+   - Mode lokal pakai `lib/users.json` (sudah ada admin `admin`/`admin`).
 
 ---
 
-## 📁 Struktur Folder
-
-```text
-laku-film/
-├── app/                        # App Router (Next.js 13+)
-│   ├── api/                    # Route API (films, series, episodes, files)
-│   │   ├── auth/               # Route API autentikasi (JWT + HttpOnly cookie)
-│   │   │   ├── login/
-│   │   │   │   └── route.ts    # Verifikasi kredensial, sign JWT, set cookie
-│   │   │   ├── register/
-│   │   │   │   └── route.ts    # Buat akun, sign JWT (opsional), set cookie
-│   │   │   ├── logout/
-│   │   │   │   └── route.ts    # Hapus cookie auth-token
-│   │   │   └── me/
-│   │   │       └── route.ts    # Baca & verify JWT, kembalikan data user
-│   │   ├── films/              # Route CRUD + hapus file otomatis
-│   │   │   └── [id]/
-│   │   │       └── route.ts
-│   │   ├── series/             # Route CRUD + hapus file otomatis
-│   │   │   └── [id]/
-│   │   │       ├── episodes/
-│   │   │       │   └── [episodeId]/
-│   │   │       │       └── route.ts
-│   │   │       └── route.ts
-│   │   └── files/              # Handler upload (multipart + JSON I/O)
-│   ├── film-saya/              # Halaman CRUD lokal
-│   ├── film-viral/             # Halaman film viral
-├── components/                 # Komponen UI Reusable
-│   ├── ui/                     # Komponen dasar shadcn/ui
-│   ├── auth-provider.tsx       # Konteks otentikasi (JWT cookie-based)
-│   ├── auth-guard.tsx          # Wrapper proteksi rute (client-side)
-│   ├── home-browser.tsx        # Grid browser film/series
-│   ├── movie-card.tsx          # Kartu film
-│   └── series-actions.tsx      # Aksi episode & series (edit/hapus)
-├── lib/                        # Data film & series (lokal) + utilitas
-│   ├── data-video.json         # Data film & series lokal
-│   ├── jwt.ts                  # Utilitas JWT (sign/verify) dengan jose
-│   ├── users.ts                # Server-side user CRUD (baca/tulis users.json)
-│   ├── auth.ts                 # Server-side getCurrentUser() dari cookie
-│   ├── types.ts                # Definisi tipe TypeScript
-│   └── users.json              # Data pengguna (lokal)
-├── public/                     # Aset statis (uploads, ikon, placeholder)
-│   ├── github.png              # Gambar preview untuk README
-│   └── uploads/                # Video & thumbnail hasil unggah
-├── styles/                     # Global CSS (Tailwind directives)
-├── .env.local                  # Environment variable (JWT_SECRET)
-├── package.json                # Dependensi proyek
-└── tsconfig.json               # Konfigurasi TypeScript
-```
-
----
-
-## ⚙️ Cara Kerja Penghapusan Berkas Saat Sebuah Film/Series Dihapus
-
-Mekanisme ini diterapkan secara konsisten di: `DELETE` & `PATCH` pada endpoint API terkait.
-
-1. **Membaca Data Lokal:** Membaca seluruh data lokal dari `lib/data-video.json`.
-2. **Pengecekan Ketergantungan:** Menghitung sekumpulan nama berkas yang masih sedang dipakai oleh entitas yang tersisa (deterministik, agar tidak ada berkas yang terhapus secara tidak sengaja karena dipakai bersama).
-3. **Penghapusan File Fisik:** Hanya menghapus berkas video (`videoFileName`, tiap entry di `videoFiles`) dan thumbnail (`thumbFileName`) yang memang **tidak lagi terpakai**.
-4. **Memperbarui Database:** Memperbarui file JSON data lokal.
-
----
-
-## 🔐 Alur Autentikasi JWT (HttpOnly Cookie)
-
-Autentikasi menggunakan **JSON Web Token (JWT)** yang disimpan di cookie browser dengan properti `HttpOnly`, melindungi terhadap serangan XSS dan CSRF.
-
-### Alur Login
-1. Klien mengirimkan kredensial (`username`, `password`) ke `POST /api/auth/login`.
-2. Server memverifikasi kredensial melalui `lib/users.ts` (membaca `lib/users.json`).
-3. Jika valid, server menandatangani JWT menggunakan `jose` (algoritma HS256) dengan payload `{ username, name, role }`.
-4. Server mengirimkan respons dengan header `Set-Cookie: auth-token=<jwt>; HttpOnly; SameSite=Lax; Secure` (Secure hanya di produksi).
-5. Browser menyimpan cookie secara otomatis; klien tidak perlu mengelola token secara manual.
-
-### Pelindungan Sesi
-- Pada setiap render, `AuthProvider` memanggil `GET /api/auth/me`.
-- Server membaca cookie `auth-token`, memverifikasinya dengan `jose`, dan mengembalikan data user.
-- Jika token tidak valid atau kadaluarsa, cookie dihapus dan status `user` diset `null`.
-
-### Logout
-- Klien memanggil `POST /api/auth/logout`.
-- Server mengirimkan cookie `auth-token` dengan `Max-Age=0` untuk menghapus sesi.
-
-### Registrasi
-- `POST /api/auth/register` membuat akun baru dan secara otomatis membuatkan JWT + cookie (kecuali untuk `registerAdmin` yang hanya membuat akun tanpa mengganti sesi).
-
----
-
----
-
-## 🚀 Deploy ke Vercel (dengan Upstash Redis + Vercel Blob)
-
-LakuFilm menyimpan **metadata & user di Upstash Redis** dan **video/thumbnail di Vercel Blob** — keduanya persist di lingkungan serverless Vercel (filesystem lokal tidak tersimpan di Vercel).
+## 🚀 Deploy ke Vercel (Live: https://laku-film-1tg5.vercel.app)
 
 ### 1. Persiapan
-- **Upstash Redis** (gratis): buat database di https://upstash.com → salin **REST API URL** & **REST API Token**.
-- **Vercel Blob**: di dashboard Vercel project → *Storage* → *Add Store* → *Blob*. Token otomatis terisi (`BLOB_READ_WRITE_TOKEN`).
+- **Upstash Redis** (gratis): https://upstash.com → *Create Database* → salin **REST API URL** & **REST API Token**.
+- **Vercel Blob**: Vercel dashboard → project → *Storage* → *Add Store* → *Blob* (token otomatis: `BLOB_READ_WRITE_TOKEN`).
 
-### 2. Deploy
-1. *New Project* → import repo `historiRyan/Laku-Film`.
-2. `vercel.json` sudah disediakan (build `pnpm install && pnpm run build`, function timeout 60s untuk upload).
-3. Di *Environment Variables*, isi:
-   - `JWT_SECRET` → string acak panjang.
-   - `UPSTASH_REDIS_REST_URL` & `UPSTASH_REDIS_REST_TOKEN` → dari Upstash.
-   - `WATCHMODE_API_KEY` → opsional.
-   - `BLOB_READ_WRITE_TOKEN` → otomatis dari Blob store.
-4. Deploy.
+### 2. Environment Variables (Settings → Environment Variables)
+Isi **nilai langsung** (jangan pakai `@` di depan):
+| Key | Value |
+| :--- | :--- |
+| `JWT_SECRET` | string acak (misal hasil `openssl rand -hex 32`) |
+| `UPSTASH_REDIS_REST_URL` | dari Upstash |
+| `UPSTASH_REDIS_REST_TOKEN` | dari Upstash |
+| `BLOB_READ_WRITE_TOKEN` | otomatis dari Blob store |
+| `WATCHMODE_API_KEY` | opsional (rekomendasi film) |
 
-### 3. Catatan
-- Mode **lokal** (`npm run dev` tanpa env di atas) tetap pakai **filesystem** (`public/uploads/`, `lib/*.json`) — praktis untuk development.
-- Deteksi mode otomatis: ada `UPSTASH_REDIS_REST_URL` + `BLOB_READ_WRITE_TOKEN` → Vercel mode; selain itu → filesystem mode.
+Centang **Production + Preview + Development**, lalu **Redeploy**.
 
-> ⚠️ Upload video besar dibatasi oleh batas body request Vercel (Hobby ~4.5MB, Pro ~25MB per route). Untuk file sangat besar, naikkan plan atau gunakan upload langsung ke Blob.
+### 3. Seed Admin (login pertama)
+Di Vercel, `users.json` lokal **tidak terbaca** (data di Redis kosong). Seed admin lewat script lokal:
+```bash
+export UPSTASH_REDIS_REST_URL=https://xxx.upstash.io
+export UPSTASH_REDIS_REST_TOKEN=xxxxx
+# optional: SEED_ADMIN_USER=admin SEED_ADMIN_PASS=admin
+node scripts/seed-admin.mjs
+```
+Setelah itu login di **/login** dengan `admin` / `admin`.
 
----
-
-## 🚀 Alternatif: Hosting Node (Railway / Render)
-
-Jika ingin tetap di hosting Node penuh, repo ini kompatibel dengan `railway.json` / `render.yaml` (mode filesystem). Catatan: data tersimpan di disk container — di tier free yang auto-sleep atau saat redeploy, **data bisa reset**.
+### 4. Catatan
+- Mode lokal (`pnpm dev` tanpa env) tetap pakai filesystem.
+- Upload video dibatasi body request Vercel (Hobby ~4.5MB, Pro ~25MB). Untuk file besar, naikkan plan atau pakai direct-to-Blob upload.
 
 ---
 
 ## 🤝 Kontribusi & Lisensi
-
-Berkontribusi sangat diterima di sini! Silakan buat *pull request* dan jelaskan perubahan yang diajukan. Proyek ini bersifat *open source* dan tersedia di bawah lisensi **MIT**.
+Open source di bawah lisensi **MIT**.
