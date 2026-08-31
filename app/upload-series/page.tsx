@@ -149,7 +149,7 @@ function UploadSeriesPageInner() {
           existingVideoFiles: ep.videoFiles,
           existingThumbFileName: ep.thumbFileName,
           thumbnailFile: null,
-          thumbPreviewUrl: ep.thumbFileName ? `/uploads/${ep.thumbFileName}` : undefined,
+          thumbPreviewUrl: ep.thumbFileName ? ep.thumbFileName : undefined,
         }))
         setEpisodes(epForms.length ? epForms : [makeEmptyEpisode()])
         setOpenEpisodeUid(epForms[0]?.uid ?? null)
@@ -541,7 +541,7 @@ function UploadSeriesPageInner() {
                 ) : existingThumb ? (
                   <div className="overflow-hidden rounded-lg border border-border">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`/uploads/${existingThumb}`} className="aspect-video w-full object-cover" />
+                    <img src={existingThumb} className="aspect-video w-full object-cover" />
                     <div className="px-3 py-2">
                       <span className="text-xs text-muted-foreground">
                         Thumbnail saat ini (ganti untuk memperbarui)
@@ -829,7 +829,7 @@ function EpisodeForm({
             <div className="flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={ep.thumbPreviewUrl ?? `/uploads/${ep.existingThumbFileName ?? ""}`}
+                src={ep.thumbPreviewUrl ?? ep.existingThumbFileName ?? "/placeholder.svg"}
                 alt={ep.title || `Episode ${index + 1}`}
                 className="h-10 w-16 shrink-0 rounded object-cover bg-muted"
               />

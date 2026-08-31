@@ -13,7 +13,7 @@ export const revalidate = 3600
 
 export default async function PlayPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const film = getLocalFilm(id) ?? getEpisodeById(id)
+  const film = (await getLocalFilm(id)) ?? (await getEpisodeById(id))
 
   if (!film) {
     notFound()
@@ -21,9 +21,9 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
 
   const isEpisode = "episodeNumber" in film
   const episode = isEpisode ? (film as Episode) : null
-  const series = episode ? findSeriesForEpisode(id) : null
+  const series = episode ? await findSeriesForEpisode(id) : null
 
-  const poster = film.thumbFileName ? `/uploads/${film.thumbFileName}` : "/placeholder.svg"
+  const poster = film.thumbFileName ? film.thumbFileName : "/placeholder.svg"
   const qualities = getVideoQualities(film.videoFiles, film.videoFileName)
 
   return (

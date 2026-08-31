@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { readDataVideo, writeDataVideo } from "@/lib/data-video"
+import { readDataVideo, writeDataVideo, addVideo } from "@/lib/data-video"
 import { getCurrentUser } from "@/lib/auth"
 
 export async function GET() {
@@ -26,7 +26,6 @@ export async function POST(request: Request) {
     }
 
     const form = await request.formData()
-
     const title = String(form.get("title") ?? "").trim()
     const description = String(form.get("description") ?? "").trim()
     const ratingRaw = String(form.get("rating") ?? "")
@@ -56,15 +55,11 @@ export async function POST(request: Request) {
 
     const rating = ratingRaw ? Number(ratingRaw) : 0
     const genres = genresRaw
-      ? genresRaw
-          .split(",")
-          .map((g) => g.trim())
-          .filter(Boolean)
+      ? genresRaw.split(",").map((g) => g.trim()).filter(Boolean)
       : []
 
-    const { videos, series } = readDataVideo()
     const newFilm = {
-      id: videoFileName.split(".")[0] || `film-${Date.now()}`,
+      id: videoFileName.split("/").pop()?.split(".")[0] || `film-${Date.now()}`,
       title,
       description,
       owner: user.username,
@@ -76,14 +71,11 @@ export async function POST(request: Request) {
       genres,
     }
 
-    writeDataVideo({ videos: [newFilm, ...videos], series })
+    await addVideo(newFilm)
 
     return NextResponse.json({ ok: true, film: newFilm })
   } catch (error) {
     console.error(error)
-    return NextResponse.json(
-      { ok: false, error: "Gagal menyimpan film." },
-      { status: 500 },
-    )
+    return NextResponse.json({ ok: false, error: "Gagal menyimpan film." }, { status: 500 })
   }
 }

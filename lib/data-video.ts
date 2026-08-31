@@ -1,68 +1,74 @@
-import fs from "fs"
-import path from "path"
+import { readJson, writeJson } from "@/lib/store"
+import type { LocalFilm, Episode, Series } from "@/lib/types"
 
-import type { Episode, LocalFilm, Series } from "@/lib/types"
+export type { LocalFilm, Episode, Series }
 
-export const DATA_PATH = path.join(process.cwd(), "lib", "data-video.json")
-
-export interface DataVideoFile {
-  videos: LocalFilm[]
-  series: Series[]
+export function readDataVideo(): { videos: LocalFilm[]; series: Series[] } {
+  const data = (readJsonSync("data-video") as { videos: LocalFilm[]; series: Series[] }) ?? {
+    videos: [] as LocalFilm[],
+    series: [] as Series[],
+  }
+  if (!Array.isArray(data.videos)) data.videos = []
+  if (!Array.isArray(data.series)) data.series = []
+  return data
 }
 
-export function readDataVideo(): DataVideoFile {
+function readJsonSync(key: string): unknown | null {
+  if (process.env.UPSTASH_REDIS_REST_URL) return null
+  const fs = require("fs")
+  const path = require("path")
+  const filePath = path.join(process.cwd(), "lib", `${key}.json`)
   try {
-    const raw = fs.readFileSync(DATA_PATH, "utf-8")
-    const parsed = JSON.parse(raw)
-    return {
-      videos: Array.isArray(parsed.videos) ? (parsed.videos as LocalFilm[]) : [],
-      series: Array.isArray(parsed.series) ? (parsed.series as Series[]) : [],
-    }
+    return JSON.parse(fs.readFileSync(filePath, "utf8"))
   } catch {
-    return { videos: [], series: [] }
+    return null
   }
 }
 
-export function writeDataVideo(data: DataVideoFile) {
-  const dir = path.dirname(DATA_PATH)
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true })
-  }
-  fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2))
+export async function writeDataVideo(data: { videos: LocalFilm[]; series: Series[] }): Promise<void> {
+  await writeJson("data-video", data)
 }
 
-export function getLocalFilm(id: string): LocalFilm | null {
-  const { videos } = readDataVideo()
-  return videos.find((v) => v.id === id) ?? null
+export async function getLocalFilm(id: string): Promise<LocalFilm | undefined> {
+  return readDataVideo().videos.find((v) => v.id === id)
 }
 
-export function getEpisode(seriesId: string, episodeId: string): Episode | null {
-  const { series } = readDataVideo()
-  const series_ = series.find((s) => s.id === seriesId)
-  if (!series_) return null
-  return series_.episodes.find((e) => e.id === episodeId) ?? null
-}
-
-export function getEpisodeById(id: string): Episode | null {
-  const { series } = readDataVideo()
-  for (const s of series) {
+export async function getEpisodeById(id: string): Promise<Episode | undefined> {
+  for (const s of readDataVideo().series) {
     const ep = s.episodes.find((e) => e.id === id)
     if (ep) return ep
   }
-  return null
+  return undefined
 }
 
-export function findSeriesForEpisode(episodeId: string): Series | null {
-  const { series } = readDataVideo()
-  return series.find((s) => s.episodes.some((e) => e.id === episodeId)) ?? null
+export async function findSeriesForEpisode(episodeId: string): Promise<Series | undefined> {
+  return readDataVideo().series.find((s) => s.episodes.some((e) => e.id === episodeId))
 }
 
-export function getSeries(id: string): Series | null {
-  const { series } = readDataVideo()
-  return series.find((s) => s.id === id) ?? null
+export function getSeries(id: string): Series | undefined {
+  return readDataVideo().series.find((s) => s.id === id)
 }
 
-export function findSeriesIndex(id: string): number {
-  const { series } = readDataVideo()
-  return series.findIndex((s) => s.id === id)
+export async function addVideo(video: LocalFilm): Promise<void> {
+  const data = readDataVideo()
+  data.videos = [video, ...data.videos]
+  await writeDataVideo(data)
+}
+
+export async function addSeries(series: Series): Promise<void> {
+  const data = readDataVideo()
+  data.series = [series, ...data.series]
+  await writeDataVideo(data)
+}
+
+export async function updateSeries(id: string, patch: Partial<Series>): Promise<void> {
+  const data = readDataVideo()
+  data.series = data.series.map((s) => (s.id === id ? { ...s, ...patch } : s))
+  await writeDataVideo(data)
+}
+
+export async function deleteSeries(id: string): Promise<void> {
+  const data = readDataVideo()
+  data.series = data.series.filter((s) => s.id !== id)
+  await writeDataVideo(data)
 }

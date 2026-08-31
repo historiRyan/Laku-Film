@@ -16,7 +16,7 @@ function toResult(v: { id: string; title: string; createdAt: number; thumbFileNa
     id: v.id,
     title: v.title,
     year: new Date(v.createdAt).getFullYear(),
-    poster: v.thumbFileName ? `/uploads/${v.thumbFileName}` : "/placeholder.svg",
+    poster: v.thumbFileName ? v.thumbFileName : "/placeholder.svg",
     type,
   }
 }
