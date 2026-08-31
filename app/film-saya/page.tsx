@@ -182,7 +182,7 @@ export default function MyFilmsPage() {
                       <div className="flex items-center gap-3">
                         {film.thumbFileName ? (
                           <img
-                            src={`/uploads/${film.thumbFileName}`}
+                            src={film.thumbFileName}
                             alt={film.title}
                             className="size-12 shrink-0 rounded object-cover bg-muted"
                             loading="lazy"

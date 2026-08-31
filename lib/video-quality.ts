@@ -8,16 +8,19 @@ export const QUALITY_UPLOAD_FIELDS: Record<QualityLabel, string> = {
   "1080p": "video_1080",
 }
 
+// Stored videoFiles values are already full URLs (Vercel Blob) or /uploads/* paths (local),
+// so no further resolution is needed here.
 export function getVideoQualities(
   videoFiles?: Partial<Record<QualityLabel, string>>,
   fallbackFileName?: string,
 ): QualityOption[] {
   return QUALITY_LABELS.map((label) => {
-    const file = videoFiles?.[label] ?? (label === "1080p" ? fallbackFileName : undefined)
+    const raw = videoFiles?.[label] ?? (label === "1080p" ? fallbackFileName : undefined)
+    const src = raw ?? ""
     return {
       label,
-      src: file ? `/uploads/${file}` : "",
-      available: Boolean(file),
+      src,
+      available: Boolean(src),
     }
   })
 }

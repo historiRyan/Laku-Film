@@ -28,11 +28,11 @@ export async function POST(request: Request) {
 
     const token = await signJwt({
       username: match.username,
-      name: match.name,
+      name: match.name ?? match.username,
       role: match.role,
     })
 
-    const user = { name: match.name, username: match.username, role: match.role }
+    const user = { name: match.name ?? match.username, username: match.username, role: match.role }
 
     const res = NextResponse.json({ ok: true, user })
     res.cookies.set("auth-token", token, getCookieOptions())

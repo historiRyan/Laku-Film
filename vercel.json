@@ -1,0 +1,23 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "pnpm install && pnpm run build",
+  "installCommand": "pnpm install",
+  "functions": {
+    "app/api/files/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/films/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/series/route.ts": {
+      "maxDuration": 60
+    }
+  },
+  "env": {
+    "JWT_SECRET": "@jwt_secret",
+    "UPSTASH_REDIS_REST_URL": "@upstash_redis_rest_url",
+    "UPSTASH_REDIS_REST_TOKEN": "@upstash_redis_rest_token",
+    "WATCHMODE_API_KEY": "@watchmode_api_key"
+  }
+}

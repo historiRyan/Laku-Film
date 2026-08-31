@@ -1,34 +1,38 @@
-import 'server-only'
-import fs from 'fs'
-import path from 'path'
+import { readJson, writeJson } from "@/lib/store"
 
-const USERS_PATH = path.join(process.cwd(), 'lib', 'users.json')
-
-export interface StoredUser {
+export type StoredUser = {
+  name?: string
   username: string
   password: string
   role: string
-  name: string
-}
-
-export interface UsersFile {
-  users: StoredUser[]
 }
 
 export function readUsers(): StoredUser[] {
+  const data = readJsonSync("users") as { users?: StoredUser[] } | null
+  return data?.users ?? []
+}
+
+function readJsonSync(key: string): unknown | null {
+  if (process.env.UPSTASH_REDIS_REST_URL) {
+    const fs = require("fs")
+    const path = require("path")
+    const filePath = path.join(process.cwd(), "lib", "users.json")
+    try {
+      return JSON.parse(fs.readFileSync(filePath, "utf8"))
+    } catch {
+      return null
+    }
+  }
+  const fs = require("fs")
+  const path = require("path")
+  const filePath = path.join(process.cwd(), "lib", "users.json")
   try {
-    const raw = fs.readFileSync(USERS_PATH, 'utf-8')
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed.users) ? (parsed.users as StoredUser[]) : []
+    return JSON.parse(fs.readFileSync(filePath, "utf8"))
   } catch {
-    return []
+    return null
   }
 }
 
-export function writeUsers(users: StoredUser[]) {
-  const dir = path.dirname(USERS_PATH)
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true })
-  }
-  fs.writeFileSync(USERS_PATH, JSON.stringify({ users }, null, 2))
+export async function writeUsers(users: StoredUser[]): Promise<void> {
+  await writeJson("users", { users })
 }
