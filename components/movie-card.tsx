@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Star, Film as FilmIcon } from "lucide-react"
 
 import type { Film } from "@/lib/types"
+import { WatchlistButton } from "@/components/watchlist-button"
 
 export function MovieCard({ movie }: { movie: Film }) {
   return (
@@ -10,6 +11,7 @@ export function MovieCard({ movie }: { movie: Film }) {
         className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <div className="relative aspect-[2/3] overflow-hidden bg-muted">
+          {"videoFileName" in movie && <WatchlistButton filmId={String(movie.id)} />}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={("videoFileName" in movie) ? movie.thumbFileName : movie.poster || "/placeholder.svg"}
@@ -34,7 +36,7 @@ export function MovieCard({ movie }: { movie: Film }) {
         <div className="flex items-baseline justify-between gap-2">
           <h3 className="text-balance font-semibold leading-tight">{movie.title}</h3>
           <span className="shrink-0 text-sm text-muted-foreground">
-            {"year" in movie ? movie.year : new Date(movie.createdAt).getFullYear()}
+            {"year" in movie ? String(movie.year) : new Date(movie.createdAt).getFullYear()}
           </span>
         </div>
 
