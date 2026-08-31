@@ -10,7 +10,6 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'LakuFilm — Rekomendasi Film Populer',
   description: 'Jelajahi film-film populer terbaru bersama LakuFilm.',
-  generator: 'v0.app',
   icons: {
     icon: [
       {

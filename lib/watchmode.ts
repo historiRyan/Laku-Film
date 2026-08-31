@@ -1,6 +1,6 @@
 import "server-only"
 
-const API_KEY = process.env.WATCHMODE_API_KEY ?? "QUnfyRG7m6sSe1u37iJgufEClQyneoTQ54gy94Ln"
+const API_KEY = process.env.WATCHMODE_API_KEY ?? ""
 const BASE_URL = "https://api.watchmode.com/v1"
 
 // Berapa banyak film yang ditampilkan (sederhana, ambil sedikit data)
@@ -32,6 +32,11 @@ type DetailsResponse = {
 }
 
 export async function getMovies(): Promise<Movie[]> {
+  if (!API_KEY) {
+    console.warn("WATCHMODE_API_KEY tidak diset. Rekomendasi film eksternal dinonaktifkan.")
+    return []
+  }
+
   // 1. Ambil daftar judul film paling populer
   const listRes = await fetch(
     `${BASE_URL}/list-titles/?apiKey=${API_KEY}&types=movie&sort_by=popularity_desc&limit=${MOVIE_LIMIT}`,
