@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: laku-film
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: JWT_SECRET
+        sync: false
+      - key: WATCHMODE_API_KEY
+        sync: false
