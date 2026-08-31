@@ -13,11 +13,5 @@
     "app/api/series/route.ts": {
       "maxDuration": 60
     }
-  },
-  "env": {
-    "JWT_SECRET": "@jwt_secret",
-    "UPSTASH_REDIS_REST_URL": "@upstash_redis_rest_url",
-    "UPSTASH_REDIS_REST_TOKEN": "@upstash_redis_rest_token",
-    "WATCHMODE_API_KEY": "@watchmode_api_key"
   }
 }
