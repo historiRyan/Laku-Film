@@ -5,6 +5,8 @@ import { ArrowLeft, ArrowRight, Star, Tv } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { AuthGuard } from "@/components/auth-guard"
 import { VideoPlayer } from "@/components/video-player"
+import { PlaybackClient } from "@/components/playback-client"
+import { CommentsSection } from "@/components/comments-section"
 import { getVideoQualities } from "@/lib/video-quality"
 import { getLocalFilm, getEpisodeById, findSeriesForEpisode } from "@/lib/data-video"
 import type { Episode } from "@/lib/types"
@@ -109,7 +111,9 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
           </div>
         </div>
 
-        <VideoPlayer poster={poster} title={film.title} qualities={qualities} />
+        <PlaybackClient filmId={id} poster={poster} title={film.title} qualities={qualities} />
+
+        <CommentsSection filmId={id} />
 
         {series && episode && (
           <div className="mt-6 flex items-center gap-2">

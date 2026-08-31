@@ -22,6 +22,8 @@ Berikut adalah tampilan antarmuka utama dari LakuFilm:
 - **🔐 Autentikasi JWT + HttpOnly Cookie:** Login dengan `jose` (HS256), cookie `HttpOnly` + `SameSite=Lax` + `Secure` (produksi), sesi 7 hari. Password di-hash dengan `scrypt` (bukan plaintext).
 - **👤 Peran User & Admin:** Admin bisa upload/delete via `/film-saya`; user biasa bisa daftar & login untuk menonton.
 - **📋 Watchlist:** Simpan film ke daftar "nantinya ditonton" (tombol ⭐ di kartu film, halaman `/watchlist`, tersimpan per-user di Redis).
+- **▶️ Lanjut Menonton (Continue Watching):** Posisi tontonan tersimpan per-user di Redis; buka lagi otomatis lanjut dari menit terakhir (section di beranda).
+- **💬 Ulasan & Komentar:** User login bisa memberi bintang + komentar per film (tersimpan di Redis, tampil di halaman putar & detail).
 - **🔍 Pencarian:** Cari film/series lokal + eksternal (`/api/search`).
 - **🌐 Rekomendasi Eksternal (Watchmode):** Saran film populer dari API Watchmode di beranda (butuh `WATCHMODE_API_KEY`, opsional).
 - **📱 Desain Responsif + Dark/Light Mode:** Tailwind CSS, `shadcn/ui`, `next-themes`.
