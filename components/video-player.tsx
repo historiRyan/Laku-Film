@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Film as FilmIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -10,15 +10,46 @@ type VideoPlayerProps = {
   poster: string
   title: string
   qualities: QualityOption[]
+  filmId: string
+  startTime?: number
+  onProgress?: (seconds: number) => void
 }
 
-export function VideoPlayer({ poster, title, qualities }: VideoPlayerProps) {
+export function VideoPlayer({ poster, title, qualities, filmId, startTime = 0, onProgress }: VideoPlayerProps) {
   const [selected, setSelected] = useState<QualityLabel>("1080p")
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const savedRef = useRef(false)
 
   useEffect(() => {
     const best = qualities.find((q) => q.available)?.label ?? "1080p"
     setSelected((prev) => (best === prev ? prev : best))
   }, [qualities])
+
+  // Resume position
+  useEffect(() => {
+    const v = videoRef.current
+    if (v && startTime > 0) {
+      v.currentTime = startTime
+    }
+  }, [startTime, qualities])
+
+  // Periodically report progress (every 5s)
+  useEffect(() => {
+    if (!onProgress) return
+    const interval = setInterval(() => {
+      const v = videoRef.current
+      if (v && !v.paused && v.duration > 0) {
+        onProgress(v.currentTime)
+      }
+    }, 5000)
+    const onEnded = () => onProgress(videoRef.current?.duration ?? 0)
+    const v = videoRef.current
+    v?.addEventListener("ended", onEnded)
+    return () => {
+      clearInterval(interval)
+      v?.removeEventListener("ended", onEnded)
+    }
+  }, [onProgress, filmId])
 
   const active = qualities.find((q) => q.label === selected)
   const availableCount = qualities.filter((q) => q.available).length
@@ -31,6 +62,7 @@ export function VideoPlayer({ poster, title, qualities }: VideoPlayerProps) {
         {active?.available && active.src ? (
           <video
             key={active.src}
+            ref={videoRef}
             src={active.src}
             controls
             poster={poster}
@@ -65,8 +97,8 @@ export function VideoPlayer({ poster, title, qualities }: VideoPlayerProps) {
               q.available && selected === q.label
                 ? "border-primary bg-primary text-primary-foreground"
                 : q.available
-                ? "border-border bg-background text-foreground hover:bg-accent"
-                : "cursor-not-allowed opacity-50",
+                  ? "border-border bg-background text-foreground hover:bg-accent"
+                  : "cursor-not-allowed opacity-50",
             )}
           >
             {q.label}

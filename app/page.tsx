@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/site-header"
 import { HomeBrowser } from "@/components/home-browser"
+import { ContinueWatching } from "@/components/continue-watching"
 import { getMovies } from "@/lib/watchmode"
 import { readDataVideo } from "@/lib/data-video"
 import type { LocalFilm, Series } from "@/lib/types"
@@ -63,6 +64,8 @@ export default async function HomePage({
         )}
 
         <HomeBrowser movies={movies} series={localSeries} defaultTab={defaultTab} />
+
+        <ContinueWatching />
       </main>
 
       <footer className="border-t border-border">

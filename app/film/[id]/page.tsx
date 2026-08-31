@@ -76,7 +76,7 @@ export default async function MovieDetailPage({
           </div>
         </div>
 
-        <VideoPlayer poster={movie.poster} title={movie.title} qualities={qualities} />
+        <VideoPlayer poster={movie.poster} title={movie.title} qualities={qualities} filmId={id} />
       </main>
 
       <footer className="border-t border-border">
