@@ -161,6 +161,30 @@ Autentikasi menggunakan **JSON Web Token (JWT)** yang disimpan di cookie browser
 
 ---
 
+---
+
+## 🚀 Deploy ke Hosting Node (Railway / Render)
+
+LakuFilm menyimpan video & data di **filesystem server** (`public/uploads/`, `lib/data-video.json`, `lib/users.json`), sehingga butuh hosting yang menjalankan **Node.js secara penuh** (bukan static host seperti Cloudflare Pages atau GitHub Pages). Rekomendasi: **Railway** atau **Render**.
+
+### Railway (paling mudah)
+1. Fork/connect repo ini ke Railway.
+2. Railway otomatis deteksi `railway.json` (build `nixpacks`, start `npm run start`).
+3. Di *Variables*, set:
+   - `JWT_SECRET` → string acak panjang (wajib diubah).
+   - `WATCHMODE_API_KEY` → opsional (rekomendasi film eksternal).
+4. Deploy. Domain otomatis diberikan.
+
+### Render
+1. *New Web Service* → connect repo.
+2. `render.yaml` sudah disediakan (plan free, Node 20).
+3. Di *Environment*, isi `JWT_SECRET` & `WATCHMODE_API_KEY`.
+4. Deploy.
+
+> ⚠️ Catatan: file & data tersimpan di disk container. Di tier free yang auto-sleep atau saat redeploy, **data bisa reset** (sesuai sifat self-hosted). Untuk persistensi penuh, gunakan layanan berbayar atau pindahkan storage ke object storage (R2/S3).
+
+---
+
 ## 🤝 Kontribusi & Lisensi
 
 Berkontribusi sangat diterima di sini! Silakan buat *pull request* dan jelaskan perubahan yang diajukan. Proyek ini bersifat *open source* dan tersedia di bawah lisensi **MIT**.
