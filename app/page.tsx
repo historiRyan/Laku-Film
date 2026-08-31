@@ -36,6 +36,8 @@ export default async function HomePage({
 
   const movies = [...watchmodeMovies, ...localMovies]
 
+  const externalEnabled = Boolean(process.env.WATCHMODE_API_KEY)
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
@@ -50,6 +52,15 @@ export default async function HomePage({
             rating, dan sinopsis singkat. Data diambil langsung dari Watchmode.
           </p>
         </section>
+
+        {!externalEnabled && (
+          <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Rekomendasi film eksternal (Watchmode) belum aktif. Setel{" "}
+            <code className="rounded bg-amber-100 px-1">WATCHMODE_API_KEY</code> di{" "}
+            <code className="rounded bg-amber-100 px-1">.env.local</code> untuk
+            menampilkan film populer dari luar.
+          </div>
+        )}
 
         <HomeBrowser movies={movies} series={localSeries} defaultTab={defaultTab} />
       </main>
